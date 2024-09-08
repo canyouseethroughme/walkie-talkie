@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Login } from "./Login";
-import { HomePage } from "./HomePage";
+import { LoggedInPage } from "./LoggedInPage";
 
 export default function Home() {
   const [userName, setUserName] = useState<string>("");
@@ -10,7 +10,7 @@ export default function Home() {
   });
 
   return loggedInUser.loggedIn ? (
-    <HomePage userName={loggedInUser.user} />
+    <LoggedInPage userName={loggedInUser.user} />
   ) : (
     <Login
       onSubmit={(e) => setLoggedInUser({ user: e, loggedIn: true })}

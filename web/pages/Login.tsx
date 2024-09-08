@@ -1,5 +1,4 @@
 import dynamic from "next/dynamic";
-
 const WiredCard = dynamic(
   () => import("react-wired-elements").then((mod) => mod.WiredCard),
   { ssr: false }
@@ -21,10 +20,11 @@ type Props = {
 
 export const Login = ({ onSubmit, setUserName, userName }: Props) => {
   return (
-    <div className="flex flex-col justify-center items-center w-full h-full">
-      <WiredCard elevation={3} className="w-64">
-        <h1 className="flex flex-col items-center mb-2 mt-2">
-          <b>JOIN THE CHAT</b>
+    <div className="flex flex-col justify-center items-center w-full h-full z-10 relative">
+      <WiredCard elevation={5} className="w-80 bg-white">
+        <h1 className="flex flex-col items-center mb-8 mt-2">
+          <b>JOIN THE FUN</b>
+          <b>Walkie Talkie App</b>
         </h1>
 
         <WiredInput
@@ -35,7 +35,7 @@ export const Login = ({ onSubmit, setUserName, userName }: Props) => {
         />
 
         <WiredButton
-          className="flex flex-col items-center mt-2 mb-2"
+          className="flex flex-col items-center mt-6 mb-2"
           onClick={() => onSubmit(userName)}
         >
           Connect

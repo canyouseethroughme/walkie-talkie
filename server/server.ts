@@ -7,10 +7,10 @@ import {
 import * as url from "url";
 import { randomUUID } from "node:crypto";
 import { Connections, Data } from "./types.d";
-import { sendToAll, sendToAllButSelf, sendToUser } from "./utils";
+import { sendToSelf, sendToUser } from "./utils";
 
 const server = http.createServer();
-const wsServer: WebSocketServer = new WebSocketServer({ server });
+const wsServer = new WebSocketServer({ server });
 const port = 8000;
 const connections: Connections = {};
 
@@ -19,7 +19,6 @@ const handleClose = (uuid: string) => {
 };
 
 wsServer.on("connection", (connection, request) => {
-  // ws://localhost:8000?username=Bob
   const { username } = url.parse(request?.url as string, true).query;
   const uuid = randomUUID();
 
@@ -28,37 +27,37 @@ wsServer.on("connection", (connection, request) => {
     userName: username as string,
     state: { typing: false, talking: false },
   };
-  console.log(connections);
 
-  // we want to notify all other users that a new user has joined
-  sendToAllButSelf(
-    connections,
-    JSON.stringify({ message: `${username} is online`, userName: username }),
-    uuid
-  );
+  // we want to show all online users
+  Object.keys(connections).forEach((conn) => {
+    connections[conn]?.webSocket?.send(
+      JSON.stringify({
+        newConnections: Object.keys(connections).map((conn) => ({
+          uuid: conn,
+          username: connections[conn].userName,
+        })),
+      })
+    );
+  });
 
   connection.on("message", (message) => {
     try {
       const data: Data = JSON.parse(message.toString());
 
-      // if the message is a common chat message, we want to notify all users
-      if (data.commonChat) {
-        sendToAll(
-          connections,
-          JSON.stringify({ message: data.message, userName: username })
-        );
-      }
-
-      // if the message is a private chat message, we want to notify only the user
+      // if the message is a private chat message, we want to notify only the user and sender
       if (data.peerUuid) {
         sendToUser(connections, message, data.peerUuid);
+        sendToSelf(connections, message, uuid);
       }
     } catch (err) {
       console.error("wsServer on message error", err);
     }
   });
 
-  connection.on("close", () => handleClose(uuid));
+  connection.on("close", () => {
+    delete connections[uuid];
+    console.log("Removed connection: ", uuid);
+  });
 });
 
 server.listen(port, () => {

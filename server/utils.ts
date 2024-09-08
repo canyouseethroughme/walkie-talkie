@@ -29,3 +29,11 @@ export const sendToUser = (
 ) => {
   connections[uuid]?.webSocket?.send(message);
 };
+
+export const sendToSelf = (
+  connections: Connections,
+  message: string | WebSocket.RawData,
+  uuid: string
+) => {
+  connections[uuid]?.webSocket?.send(message);
+};

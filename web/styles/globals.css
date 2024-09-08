@@ -7,14 +7,17 @@
   --foreground: #171717;
 }
 
-body {
+body{
   color: var(--foreground);
   background: var(--background);
-  
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+h1{
+  font-size: 2rem;
 }
