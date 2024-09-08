@@ -1,0 +1,27 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon --exec ts-node server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "typescript": "^4.5.4",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.10.0",
+    "@types/node": "^16.11.7",
+    "@types/ws": "^8.0.0",
+    "eslint": "^8.57.0",
+    "globals": "^15.9.0",
+    "nodemon": "3.1.4",
+    "ts-node": "^10.4.0",
+    "typescript-eslint": "^8.4.0"
+  }
+}
