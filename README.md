@@ -16,11 +16,13 @@ This app offers a streamlined combination of chat and walkie-talkie features, wr
 ## Development
 
 For the web:
-`cd web`
-`npm install`
-`npm run dev`
+
+- `cd web`
+- `npm install`
+- `npm run dev`
 
 For the server:
-`cd server`
-`npm install`
-`npm run dev`
+
+- `cd server`
+- `npm install`
+- `npm run dev`
