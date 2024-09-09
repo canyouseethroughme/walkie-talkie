@@ -30,6 +30,8 @@ export const LoggedInPage = ({ userName }: Props) => {
   const [chatNotification, setChatNotification] = useState<string>("");
   const [urlStream, setUrlStream] = useState<string | undefined>(undefined);
   const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [voiceMessageDuration, setVoiceMessageDuration] = useState<number>(0);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const mediaStream = useRef<MediaStream | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
@@ -51,7 +53,6 @@ export const LoggedInPage = ({ userName }: Props) => {
       const blob = new Blob([event.data]);
       blob.text().then((text) => {
         const jsonData = JSON.parse(text);
-
         if (jsonData.chat) {
           setChatMessages((prev) => {
             const newMessages = [
@@ -70,6 +71,8 @@ export const LoggedInPage = ({ userName }: Props) => {
         }
 
         if (jsonData.voiceMessage) {
+          console.log("jsonData", jsonData);
+          setVoiceMessageDuration(jsonData.duration);
           setUrlStream(jsonData.voiceMessage);
         }
 
@@ -99,6 +102,16 @@ export const LoggedInPage = ({ userName }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (voiceMessageDuration > 0) {
+      setIsPlaying(true);
+
+      setTimeout(() => {
+        setIsPlaying(false);
+      }, voiceMessageDuration * 1000);
+    }
+  }, [voiceMessageDuration]);
+
   const startRecording = async () => {
     try {
       setIsRecording(true);
@@ -125,13 +138,23 @@ export const LoggedInPage = ({ userName }: Props) => {
       mediaRecorder.current.onstop = async () => {
         const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
         const url = URL.createObjectURL(audioBlob);
-        setIsRecording(false);
-        socketRef.current?.send(
-          JSON.stringify({
-            voiceMessage: url,
-            peerUuid: selectedPeerConnection?.uuid,
-          })
-        );
+        const audio = new Audio(url);
+        const checkDuration = () => {
+          if (audio.duration && audio.duration !== Infinity) {
+            setIsRecording(false);
+            socketRef.current?.send(
+              JSON.stringify({
+                voiceMessage: url,
+                peerUuid: selectedPeerConnection?.uuid,
+                duration: audio.duration,
+              })
+            );
+          } else {
+            setTimeout(checkDuration, 100);
+          }
+        };
+        audio.addEventListener("loadedmetadata", checkDuration);
+        audio.load();
       };
     }
   };
@@ -239,7 +262,9 @@ export const LoggedInPage = ({ userName }: Props) => {
                   <audio autoPlay src={urlStream} />
                   <button
                     className={`rounded-full border-2 p-4 w-32 h-32 ${
-                      isRecording ? "bg-red-500" : "bg-green-500"
+                      isPlaying && "animate-pulse"
+                    } ${
+                      isRecording || isPlaying ? "bg-red-500" : "bg-green-500"
                     }`}
                     onMouseDown={startRecording}
                     onMouseUp={stopRecording}
