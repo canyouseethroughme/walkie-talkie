@@ -63,10 +63,27 @@ export const LoggedInPage = ({ userName }: Props) => {
             return newConnections;
           });
         }
+
+        if (jsonData.disconnected) {
+          setConnections((prev) => {
+            const newConnections = prev.filter(
+              (connection) => connection.uuid !== jsonData.disconnected.uuid
+            );
+            return newConnections;
+          });
+        }
       });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const newMessageNo = () => {
+    const no = chatMessages.filter(
+      (message) => message.user !== userName
+    ).length;
+    if (no == 0) return "";
+    return `${no} msg${no > 1 ? "s" : ""}`;
+  };
 
   return (
     <div className="flex flex-col justify-center items-center w-screen h-screen z-10 relative">
@@ -81,7 +98,10 @@ export const LoggedInPage = ({ userName }: Props) => {
                     setSelectedPeerConnection(connection);
                   }}
                 >
-                  <b>{connection.username}</b>
+                  <b>
+                    {connection.username}{" "}
+                    {!selectedPeerConnection ? newMessageNo() : ""}
+                  </b>
                 </WiredButton>
               </Fragment>
             ))
@@ -104,14 +124,14 @@ export const LoggedInPage = ({ userName }: Props) => {
                 X
               </WiredButton>
             </div>
-            <div className="flex">
-              <div className="w-[80%] h-full border-r flex flex-col">
+            <div className="flex border-b">
+              <div className="w-[80%] h-[50vh] border-r flex flex-col">
                 <div className="flex items-center p-4 border-b">
                   <h2 className="text-lg font-semibold">
                     Chat with {selectedPeerConnection?.username}
                   </h2>
                 </div>
-                <div className="flex-grow h-[15rem] overflow-hidden p-4">
+                <div className="h-full overflow-hidden p-4">
                   {chatMessages.map((message, i) => (
                     <p
                       className={`${
@@ -153,7 +173,7 @@ export const LoggedInPage = ({ userName }: Props) => {
                 </div>
               </div>
 
-              <div className="flex flex-col w-[20%] h-full">
+              <div className="flex flex-col w-[20%] h-[50vh]">
                 <div className="flex items-center p-4 border-b">
                   <h2 className="text-lg font-semibold">Walkie talkie</h2>
                 </div>
