@@ -21,9 +21,11 @@ type Props = {
 export const Login = ({ onSubmit, setUserName, userName }: Props) => {
   return (
     <div className="flex flex-col justify-center items-center w-full h-full z-10 relative">
-      <WiredCard elevation={5} className="w-80 bg-white">
-        <h1 className="flex flex-col items-center mb-8 mt-2">
+      <WiredCard elevation={5} className="w-[25rem] bg-white">
+        <h1 className="flex flex-col items-center mb-8 mt-2 text-lime-600">
           <b>JOIN THE FUN</b>
+        </h1>
+        <h1 className="flex flex-col items-center mb-8 mt-2">
           <b>Walkie Talkie App</b>
         </h1>
 
@@ -35,7 +37,8 @@ export const Login = ({ onSubmit, setUserName, userName }: Props) => {
         />
 
         <WiredButton
-          className="flex flex-col items-center mt-6 mb-2"
+          elevation={2}
+          className="flex flex-col items-center mt-6 mb-4"
           onClick={() => onSubmit(userName)}
         >
           Connect

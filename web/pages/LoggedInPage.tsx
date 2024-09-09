@@ -1,5 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
+import walkieTalkie from "../public/walkie-talkie.webp";
 const WiredCard = dynamic(
   () => import("react-wired-elements").then((mod) => mod.WiredCard),
   { ssr: false }
@@ -64,7 +66,7 @@ export const LoggedInPage = ({ userName }: Props) => {
                 (message) => message.user !== userName
               ).length;
               if (no == 0) return "";
-              return `// ${no} new msg${no > 1 ? "s " : " "}`;
+              return `${no} txt msg${no > 1 ? "s from " : " from "}`;
             });
             return newMessages;
           });
@@ -173,10 +175,10 @@ export const LoggedInPage = ({ userName }: Props) => {
                   }}
                 >
                   <b>
+                    {!selectedPeerConnection && chatNotification}
                     {connection.username}{" "}
-                    {!selectedPeerConnection ? chatNotification : ""}
                     {!selectedPeerConnection && urlStream
-                      ? "// aaaaAAAAaaa"
+                      ? "// Roger?! Over!"
                       : ""}
                   </b>
                 </WiredButton>
@@ -261,30 +263,32 @@ export const LoggedInPage = ({ userName }: Props) => {
                 <div className="p-4 flex justify-center items-center flex-grow overflow-auto">
                   <audio autoPlay src={urlStream} />
                   <button
-                    className={`rounded-full border-2 p-4 w-32 h-32 ${
+                    className={`rounded-full border-2 border-black p-4 w-32 h-32 ${
                       isPlaying && "animate-pulse"
                     } ${
-                      isRecording || isPlaying ? "bg-red-500" : "bg-green-500"
+                      isRecording || isPlaying ? "bg-red-500" : "bg-lime-300"
                     }`}
                     onMouseDown={startRecording}
                     onMouseUp={stopRecording}
                   >
-                    Press, hold and talk
+                    {isPlaying ? "TALKING..." : "PRESS, HOLD AND TALK"}
                   </button>
                 </div>
               </div>
             </div>
           </>
         ) : (
-          <div className="m-8">
-            <h1 className="text-lime-600">Welcome {userName}!</h1>
+          <div className="m-8 flex flex-col h-[50vh] justify-center items-center">
+            <h1 className="text-lime-600 mt-8">
+              <b>Welcome {userName}!</b>
+            </h1>
 
             <h2 className="mt-8 mb-8">
               Start a conversation through chat or walkie talkie by selecting a
               user.
             </h2>
 
-            <code className="text-rose-700">
+            <code className="text-lime-600">
               GOOD TO KNOW:
               <br />
               - the app offers same functionality as a walkie talkie, with only
@@ -293,6 +297,14 @@ export const LoggedInPage = ({ userName }: Props) => {
               - to send a voice message, press and hold the button
               <br />
             </code>
+
+            <Image
+              src={walkieTalkie}
+              alt="soldier walkie talkie"
+              fetchPriority="high"
+              height={500}
+              className="object-cover  z-0"
+            />
           </div>
         )}
       </WiredCard>
