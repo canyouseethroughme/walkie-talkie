@@ -34,6 +34,9 @@ wsServer.on("connection", (connection, request) => {
   connection.on("message", (message) => {
     try {
       const data = JSON.parse(message.toString());
+      if (data.voiceMessage) {
+        return sendToUser(connections, message, data.peerUuid);
+      }
 
       // if the message is a private chat message, we want to notify only the user and sender
       if (data.peerUuid) {

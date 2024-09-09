@@ -19,15 +19,21 @@ type Props = {
 
 type Connection = { uuid: string; username: string };
 
+type ChatMessage = { user: string; message: string };
+
 export const LoggedInPage = ({ userName }: Props) => {
   const [connections, setConnections] = useState<Connection[]>([]);
   const [selectedPeerConnection, setSelectedPeerConnection] =
     useState<Connection | null>(null);
   const [typedMessage, setTypedMessage] = useState<string>("");
-  const [chatMessages, setChatMessages] = useState<
-    { user: string; message: string }[]
-  >([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatNotification, setChatNotification] = useState<string>("");
+  const [urlStream, setUrlStream] = useState<string | undefined>(undefined);
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const mediaStream = useRef<MediaStream | null>(null);
+  const mediaRecorder = useRef<MediaRecorder | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
+
   const WS_URL = "ws://127.0.0.1:8000?username=" + userName;
 
   useEffect(() => {
@@ -45,14 +51,26 @@ export const LoggedInPage = ({ userName }: Props) => {
       const blob = new Blob([event.data]);
       blob.text().then((text) => {
         const jsonData = JSON.parse(text);
+
         if (jsonData.chat) {
           setChatMessages((prev) => {
             const newMessages = [
               ...prev,
               { user: jsonData.username, message: jsonData.chat },
             ];
+            setChatNotification(() => {
+              const no = newMessages.filter(
+                (message) => message.user !== userName
+              ).length;
+              if (no == 0) return "";
+              return `// ${no} new msg${no > 1 ? "s " : " "}`;
+            });
             return newMessages;
           });
+        }
+
+        if (jsonData.voiceMessage) {
+          setUrlStream(jsonData.voiceMessage);
         }
 
         if (jsonData.newConnections) {
@@ -74,15 +92,48 @@ export const LoggedInPage = ({ userName }: Props) => {
         }
       });
     });
+
+    return () => {
+      socketRef.current?.close();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const newMessageNo = () => {
-    const no = chatMessages.filter(
-      (message) => message.user !== userName
-    ).length;
-    if (no == 0) return "";
-    return `${no} msg${no > 1 ? "s" : ""}`;
+  const startRecording = async () => {
+    try {
+      setIsRecording(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStream.current = stream;
+      mediaRecorder.current = new MediaRecorder(stream);
+      mediaRecorder.current.start();
+    } catch (error) {
+      console.error("Error starting recording:", error);
+    }
+  };
+
+  const stopRecording = async () => {
+    if (mediaRecorder.current && mediaStream.current) {
+      mediaRecorder.current.stop();
+      const audioChunks: [] = [];
+      mediaStream.current.getTracks().forEach((track) => {
+        track.stop();
+      });
+
+      mediaRecorder.current.ondataavailable = (event) => {
+        audioChunks.push(event.data as never);
+      };
+      mediaRecorder.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+        const url = URL.createObjectURL(audioBlob);
+        setIsRecording(false);
+        socketRef.current?.send(
+          JSON.stringify({
+            voiceMessage: url,
+            peerUuid: selectedPeerConnection?.uuid,
+          })
+        );
+      };
+    }
   };
 
   return (
@@ -100,7 +151,10 @@ export const LoggedInPage = ({ userName }: Props) => {
                 >
                   <b>
                     {connection.username}{" "}
-                    {!selectedPeerConnection ? newMessageNo() : ""}
+                    {!selectedPeerConnection ? chatNotification : ""}
+                    {!selectedPeerConnection && urlStream
+                      ? "// aaaaAAAAaaa"
+                      : ""}
                   </b>
                 </WiredButton>
               </Fragment>
@@ -119,7 +173,11 @@ export const LoggedInPage = ({ userName }: Props) => {
             <div className="flex justify-end">
               <WiredButton
                 className=""
-                onClick={() => setSelectedPeerConnection(null)}
+                onClick={() => {
+                  setUrlStream(undefined);
+                  setChatNotification("");
+                  setSelectedPeerConnection(null);
+                }}
               >
                 X
               </WiredButton>
@@ -174,28 +232,41 @@ export const LoggedInPage = ({ userName }: Props) => {
               </div>
 
               <div className="flex flex-col w-[20%] h-[50vh]">
-                <div className="flex items-center p-4 border-b">
+                <div className="flex p-4 border-b">
                   <h2 className="text-lg font-semibold">Walkie talkie</h2>
                 </div>
-                <div className="p-4 flex-grow overflow-auto">
-                  <p className="text-gray-500">
-                    Additional information or controls can go here.
-                  </p>
+                <div className="p-4 flex justify-center items-center flex-grow overflow-auto">
+                  <audio autoPlay src={urlStream} />
+                  <button
+                    className={`rounded-full border-2 p-4 w-32 h-32 ${
+                      isRecording ? "bg-red-500" : "bg-green-500"
+                    }`}
+                    onMouseDown={startRecording}
+                    onMouseUp={stopRecording}
+                  >
+                    Press, hold and talk
+                  </button>
                 </div>
               </div>
             </div>
           </>
         ) : (
           <div className="m-8">
-            <h1>Welcome {userName}!</h1>
-            <h2>
+            <h1 className="text-lime-600">Welcome {userName}!</h1>
+
+            <h2 className="mt-8 mb-8">
               Start a conversation through chat or walkie talkie by selecting a
               user.
             </h2>
 
             <code className="text-rose-700">
-              IN ORDER TO USE THE CHAT, BOTH USERS NEED TO HAVE THE CONNECTION
-              ACTIVE
+              GOOD TO KNOW:
+              <br />
+              - the app offers same functionality as a walkie talkie, with only
+              2 users engaged in a conversation (no group chat)
+              <br />
+              - to send a voice message, press and hold the button
+              <br />
             </code>
           </div>
         )}
