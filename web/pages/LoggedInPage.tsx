@@ -29,7 +29,6 @@ export const LoggedInPage = ({ userName }: Props) => {
     useState<Connection | null>(null);
   const [typedMessage, setTypedMessage] = useState<string>("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatNotification, setChatNotification] = useState<string>("");
   const [urlStream, setUrlStream] = useState<string | undefined>(undefined);
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [voiceMessageDuration, setVoiceMessageDuration] = useState<number>(0);
@@ -61,19 +60,11 @@ export const LoggedInPage = ({ userName }: Props) => {
               ...prev,
               { user: jsonData.username, message: jsonData.chat },
             ];
-            setChatNotification(() => {
-              const no = newMessages.filter(
-                (message) => message.user !== userName
-              ).length;
-              if (no == 0) return "";
-              return `${no} txt msg${no > 1 ? "s from " : " from "}`;
-            });
             return newMessages;
           });
         }
 
         if (jsonData.voiceMessage) {
-          console.log("jsonData", jsonData);
           setVoiceMessageDuration(jsonData.duration);
           setUrlStream(jsonData.voiceMessage);
         }
@@ -175,7 +166,12 @@ export const LoggedInPage = ({ userName }: Props) => {
                   }}
                 >
                   <b>
-                    {!selectedPeerConnection && chatNotification}
+                    {!selectedPeerConnection &&
+                    chatMessages.find((msg) => msg.user === connection.username)
+                      ? `${chatMessages.length} txt msg${
+                          chatMessages.length > 1 ? "s from " : " from "
+                        }`
+                      : ""}
                     {connection.username}{" "}
                     {!selectedPeerConnection && urlStream
                       ? "// Roger?! Over!"
@@ -200,7 +196,6 @@ export const LoggedInPage = ({ userName }: Props) => {
                 className=""
                 onClick={() => {
                   setUrlStream(undefined);
-                  setChatNotification("");
                   setSelectedPeerConnection(null);
                 }}
               >
@@ -278,12 +273,12 @@ export const LoggedInPage = ({ userName }: Props) => {
             </div>
           </>
         ) : (
-          <div className="m-8 flex flex-col h-[50vh] justify-center items-center">
-            <h1 className="text-lime-600 mt-8">
+          <div className="m-6 flex flex-col h-[50vh] justify-center items-center">
+            <h1 className="text-lime-600 mt-6">
               <b>Welcome {userName}!</b>
             </h1>
 
-            <h2 className="mt-8 mb-8">
+            <h2 className="mt-8 mb-6">
               Start a conversation through chat or walkie talkie by selecting a
               user.
             </h2>
@@ -291,8 +286,11 @@ export const LoggedInPage = ({ userName }: Props) => {
             <code className="text-lime-600">
               GOOD TO KNOW:
               <br />
-              - the app offers same functionality as a walkie talkie, with only
-              2 users engaged in a conversation (no group chat)
+              - the app offers same functionality as a walkie talkie, offering
+              full support for only 2 users at a time (peer-to-peer)
+              <br />
+              - having more than 2 users online will most probably result in a
+              buggy experience
               <br />
               - to send a voice message, press and hold the button
               <br />
@@ -302,8 +300,9 @@ export const LoggedInPage = ({ userName }: Props) => {
               src={walkieTalkie}
               alt="soldier walkie talkie"
               fetchPriority="high"
-              height={500}
-              className="object-cover  z-0"
+              height={190}
+              width={190}
+              className="object-cover mt-4 z-0"
             />
           </div>
         )}
